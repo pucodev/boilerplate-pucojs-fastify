@@ -7,6 +7,10 @@ import { UserController } from '../../controllers/user.controller.js'
  */
 export function userRoutes(fastify, _options) {
   fastify.get('/', (request, reply) => {
-    UserController.fetchUsers(fastify, request, reply)
+    UserController.fetch(fastify, request, reply)
+  })
+
+  fastify.post('/', (request, reply) => {
+    UserController.insert(fastify, request, reply)
   })
 }

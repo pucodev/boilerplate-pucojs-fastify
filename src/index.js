@@ -1,11 +1,16 @@
 import Fastify from 'fastify'
 import { v1Routes } from './routes/v1/v1.route.js'
+import { configDbService } from './services/config.service.js'
+import fastifyFormbody from '@fastify/formbody'
 
 const fastify = Fastify({
   logger: true,
 })
 
+fastify.register(fastifyFormbody)
 fastify.register(v1Routes, { prefix: '/api/v1' })
+
+configDbService(fastify)
 
 /**
  * Run the server!
