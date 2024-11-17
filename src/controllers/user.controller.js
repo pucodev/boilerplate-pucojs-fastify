@@ -1,4 +1,4 @@
-import { UserService } from '../services/user.service.js'
+import { UserModel } from '../model/user.model.js'
 import { MainController } from './main.controller.js'
 
 export class UserController extends MainController {
@@ -19,12 +19,12 @@ export class UserController extends MainController {
    * @param {import('fastify').FastifyReply} reply fastify reply
    */
   static async insert(fastify, request, reply) {
-    const service = new UserService(fastify)
-    const item = await service.insert({
+    const user = new UserModel({
       firstname: 'demo firstname',
       lastname: 'demo lastname',
       email: 'demo email',
     })
-    reply.send(item)
+    await user.insert(fastify)
+    reply.send(user.node)
   }
 }

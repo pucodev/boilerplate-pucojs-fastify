@@ -8,11 +8,6 @@ export class UserService extends MainService {
    * @param {import("fastify").FastifyInstance} fastify  Encapsulated Fastify Instance
    */
   constructor(fastify) {
-    super(fastify, UserService.TABLE_NAME, [
-      'id',
-      'firstname',
-      'lastname',
-      'email',
-    ])
+    super(fastify, UserService.TABLE_NAME, ['firstname', 'lastname', 'email'])
   }
 }
