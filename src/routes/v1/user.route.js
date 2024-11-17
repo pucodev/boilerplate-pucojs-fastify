@@ -13,4 +13,8 @@ export function userRoutes(fastify, _options) {
   fastify.post('/', (request, reply) => {
     UserController.insert(fastify, request, reply)
   })
+
+  fastify.patch('/:id', (request, reply) => {
+    UserController.update(fastify, request, reply)
+  })
 }

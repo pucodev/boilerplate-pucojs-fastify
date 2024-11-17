@@ -37,7 +37,7 @@ export class MainService {
   /**
    * Agrega registro a la base de datos
    * @param {object} data Objeto a agregar a la base de datos
-   * @returns {Promise<object>} Elemento guardado
+   * @returns {Promise<object>} Registro guardado
    */
   async insert(data) {
     const client = await this.connect()
@@ -65,6 +65,48 @@ export class MainService {
         sql,
         // Parameters
         [],
+      )
+
+      if (Array.isArray(rows)) {
+        return rows[0]
+      }
+
+      return rows
+    } finally {
+      client.release()
+    }
+  }
+
+  /**
+   * Actualiza un registro de la base de datos segun el id
+   * @param {number} id ID del item
+   * @param {object} data Objeto con los parametros a actualizar
+   * @returns {Promise<object>} Registro actualizado
+   */
+  async update(id, data) {
+    const client = await this.connect()
+
+    try {
+      // Validate data
+      const validData = this.getValidData(data)
+
+      // Compute fields and values to insert
+      const setters = []
+      for (const key in validData) {
+        setters.push(key + ' = ' + format('%L', validData[key]))
+      }
+
+      const sql = format(
+        `UPDATE %I SET ${setters.join(', ')} WHERE %I = $1 RETURNING *`,
+        this._tableName,
+        this._id,
+      )
+
+      const { rows } = await client.query(
+        // Query
+        sql,
+        // Parameters
+        [id],
       )
 
       if (Array.isArray(rows)) {

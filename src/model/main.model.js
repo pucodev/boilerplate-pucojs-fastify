@@ -17,4 +17,13 @@ export class MainModel {
     const item = await service.insert(this.node)
     return item
   }
+
+  /**
+   * @param {MainService} service model service
+   * @returns {Promise<object>} model node
+   */
+  async _update(service) {
+    const item = await service.update(this.node.id, this.node)
+    return item
+  }
 }

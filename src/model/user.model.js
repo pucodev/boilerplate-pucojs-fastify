@@ -26,4 +26,15 @@ export class UserModel extends MainModel {
     this.node = item
     return this
   }
+
+  /**
+   * @param {import("fastify").FastifyInstance} fastify  Encapsulated Fastify Instance
+   * @returns {Promise<UserModel>} update node and return model
+   */
+  async update(fastify) {
+    const service = new UserService(fastify)
+    const item = await super._update(service)
+    this.node = item
+    return this
+  }
 }
