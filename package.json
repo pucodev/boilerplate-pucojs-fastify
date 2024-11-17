@@ -3,9 +3,8 @@
   "version": "1.0.0",
   "description": "Boilerplate para proyecto en nodejs usando fastify y pgsql",
   "type": "module",
-  "dependencies": {},
   "scripts": {
-    "dev": "node --env-file .env --watch src/index.js",
+    "dev": "nodemon --env-file .env src/index.js",
     "lint": "eslint .",
     "start": "node --env-file .env src/index.js"
   },
@@ -13,7 +12,11 @@
     "@stylistic/eslint-plugin": "^2.10.0",
     "eslint": "^9.13.0",
     "eslint-plugin-jsdoc": "^50.4.3",
-    "neostandard": "^0.11.7"
+    "neostandard": "^0.11.7",
+    "nodemon": "^3.1.7"
   },
-  "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee"
+  "packageManager": "pnpm@9.12.3+sha512.cce0f9de9c5a7c95bef944169cc5dfe8741abfb145078c0d508b868056848a87c81e626246cb60967cbd7fd29a6c062ef73ff840d96b3c86c40ac92cf4a813ee",
+  "dependencies": {
+    "fastify": "^5.1.0"
+  }
 }
