@@ -1,16 +1,28 @@
 import { UserModel } from '../model/user.model.js'
+import { UserService } from '../services/user.service.js'
 import { MainController } from './main.controller.js'
 
 export class UserController extends MainController {
   /**
    * @param {import("fastify").FastifyInstance} fastify  Encapsulated Fastify Instance
-   * @param {import('fastify').FastifyRequest} request fastify request
+   * @param {import('fastify').FastifyRequest<{ Querystring: Record<string, string> }>} request fastify request
    * @param {import('fastify').FastifyReply} reply fastify reply
    */
   static async fetch(fastify, request, reply) {
-    reply.send({
-      status: 'ok',
-    })
+    try {
+      const params = MainController.getQueryParams(request.query)
+
+      const service = new UserService(fastify)
+      const items = await service.fetch(params.fields, params.filters)
+      reply.send({
+        data: items,
+      })
+    } catch (error) {
+      console.error('error ', error)
+      reply.status(500).send({
+        status: 'Server error',
+      })
+    }
   }
 
   /**

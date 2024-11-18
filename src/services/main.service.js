@@ -12,6 +12,8 @@ export class MainService {
     this._tableName = tableName
     this._fields = fields
     this._id = 'id'
+
+    this._timestampFields = ['created_at', 'updated_at']
   }
 
   async connect() {
@@ -112,6 +114,71 @@ export class MainService {
       if (Array.isArray(rows)) {
         return rows[0]
       }
+
+      return rows
+    } finally {
+      client.release()
+    }
+  }
+
+  /**
+   * Obtiene los registros de una tabla
+   * @param {string[]} fields fields to select
+   * @param {import('../controllers/main.controller').QueryFilter[]} filters params to filter
+   * @returns {Promise<object>} Registro actualizado
+   */
+  async fetch(fields, filters) {
+    const client = await this.connect()
+
+    try {
+      // Agregamos a los campos disponibles, los timestamps y el id
+      const allValidFields = []
+        .concat(this._fields)
+        .concat(this._timestampFields)
+        .concat([this._id])
+
+      // De los fields solo mostramos los campos válidos
+      const validFields = []
+      if (Array.isArray(fields)) {
+        fields.forEach(field => {
+          if (allValidFields.includes(field.trim())) {
+            validFields.push(field.trim())
+          }
+        })
+      }
+
+      // Agregamos los filtros solo de campos válidos
+      /** @type {import('../controllers/main.controller').QueryFilter[]} */
+      const validFilters = []
+      if (Array.isArray(filters)) {
+        filters.forEach(item => {
+          if (allValidFields.includes(item.field.trim())) {
+            validFilters.push(item)
+          }
+        })
+      }
+
+      let select = '*'
+      if (validFields.length > 0) {
+        select = validFields.join(', ')
+      }
+
+      let sql = format(`SELECT ${select} FROM %I`, this._tableName)
+
+      // Agregamos los WHERE
+      if (validFilters.length > 0) {
+        const items = validFilters.map(
+          (item, index) => `(${item.field} ${item.logic || '='} $${index + 1})`,
+        )
+        sql += ` WHERE ${items.join(' AND ')}`
+      }
+
+      const { rows } = await client.query(
+        // Query
+        sql,
+        // Parameters
+        validFilters.map(item => item.value),
+      )
 
       return rows
     } finally {
