@@ -1,4 +1,4 @@
-import { UserModel } from '../model/user.model.js'
+import { UserModel } from '../models/user.model.js'
 import { UserService } from '../services/user.service.js'
 import { MainController } from './main.controller.js'
 
@@ -27,7 +27,7 @@ export class UserController extends MainController {
 
   /**
    * @param {import("fastify").FastifyInstance} fastify  Encapsulated Fastify Instance
-   * @param {import('fastify').FastifyRequest<{Body: import('../model/user.model.js').UserNode}>} request fastify request
+   * @param {import('fastify').FastifyRequest<{Body: import('../models/user.model.js').UserNode}>} request fastify request
    * @param {import('fastify').FastifyReply} reply fastify reply
    */
   static async insert(fastify, request, reply) {
@@ -45,12 +45,12 @@ export class UserController extends MainController {
 
   /**
    * @param {import("fastify").FastifyInstance} fastify  Encapsulated Fastify Instance
-   * @param {import('fastify').FastifyRequest<{Params: {id: number}, Body: import('../model/user.model.js').UserNode}>} request fastify request
+   * @param {import('fastify').FastifyRequest<{Params: {id: number}, Body: import('../models/user.model.js').UserNode}>} request fastify request
    * @param {import('fastify').FastifyReply} reply fastify reply
    */
   static async update(fastify, request, reply) {
     try {
-      /** @type {import('../model/user.model.js').UserNode} */
+      /** @type {import('../models/user.model.js').UserNode} */
       const data = { ...request.body }
       data.id = request.params.id
 
