@@ -1,5 +1,5 @@
 {
-  "name": "pucojs",
+  "name": "boilerplate-pucojs-fastify",
   "version": "1.0.0",
   "description": "Boilerplate para proyecto en nodejs usando fastify y pgsql",
   "type": "module",
