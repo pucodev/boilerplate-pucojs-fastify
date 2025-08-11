@@ -1,5 +1,8 @@
 # 🧭 Boilerplate para proyectos Nodejs
 
+> [!WARNING]  
+> Código en proceso de migración a TS
+
 Código boilerplate para construir proyectos API basados en nodejs con fastify y postgres sql, esta es una estructura base que se puede usar como inicio
 
 ## Estructura
