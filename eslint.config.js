@@ -1,10 +1,13 @@
-import neostandard from 'neostandard'
-import jsdoc from 'eslint-plugin-jsdoc'
 import stylistic from '@stylistic/eslint-plugin'
+import jsdoc from 'eslint-plugin-jsdoc'
+import neostandard from 'neostandard'
 
 export default [
-  ...neostandard(),
+  ...neostandard({
+    ts: true,
+  }),
   jsdoc.configs['flat/recommended'],
+  jsdoc.configs['flat/recommended-typescript'],
   {
     plugins: {
       '@stylistic': stylistic,

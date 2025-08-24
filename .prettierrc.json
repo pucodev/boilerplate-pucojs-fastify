@@ -6,6 +6,13 @@
   "trailingComma": "all",
   "bracketSpacing": true,
   "arrowParens": "avoid",
+  "spaceBeforeFunctionParen": true,
   "endOfLine": "auto",
-  "spaceBeforeFunctionParen": true
+  "plugins": [
+    "@trivago/prettier-plugin-sort-imports",
+    "prettier-plugin-packagejson"
+  ],
+  "importOrder": ["<THIRD_PARTY_MODULES>", "^#(.*)$", "^[./]"],
+  "importOrderSeparation": true,
+  "importOrderSortSpecifiers": true
 }
