@@ -5,7 +5,8 @@
   "type": "module",
   "imports": {
     "#utils/*": "./src/core/utils/*.ts",
-    "#config/*": "./src/core/config/*.ts"
+    "#config/*": "./src/core/config/*.ts",
+    "#routes/*": "./src/api/v1/routes/*.ts"
   },
   "scripts": {
     "dev": "node --watch --env-file=.env src/index.ts",

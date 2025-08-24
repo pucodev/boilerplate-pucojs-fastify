@@ -2,6 +2,7 @@ import fastifyFormbody from '@fastify/formbody'
 import Fastify from 'fastify'
 
 import { IS_DEBUG, PORT } from '#config/env'
+import v1Routes from '#routes/v1.route'
 
 const fastify = Fastify({
   logger: IS_DEBUG
@@ -18,6 +19,7 @@ const fastify = Fastify({
 })
 
 fastify.register(fastifyFormbody)
+fastify.register(v1Routes, { prefix: '/api/v1' })
 
 /**
  * Run the server!
