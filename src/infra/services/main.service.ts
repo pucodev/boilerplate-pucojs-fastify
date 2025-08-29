@@ -21,33 +21,50 @@ export type StringOperator =
 
 export type NumberOperator = 'exact' | 'gt' | 'gte' | 'lt' | 'lte'
 
+export interface SQL_OPERATOR {
+  sql: string
+  value: string | number
+}
+
 export const DEFAULT_FIELD_OPERATORS: Record<
   StringOperator,
-  (field: string, value: string) => string
+  (field: string, value: string, index: number) => SQL_OPERATOR
 > = {
-  exact(field: string, value: string) {
-    return format('%I = %L', field, value)
+  exact(field, value, index) {
+    return { sql: format('%I = %s', field, `$${index}`), value }
   },
-  iexact(field: string, value: string) {
-    return format('UPPER(%I) = UPPER(%L)', field, value)
+  iexact(field, value, index) {
+    return { sql: format('UPPER(%I) = UPPER(%s)', field, `$${index}`), value }
   },
-  contains(field: string, value: string) {
-    return format('%I LIKE %L', field, `%${value}%`)
+  contains(field, value, index) {
+    return {
+      sql: format('%I LIKE %s', field, `$${index}`),
+      value: `%${value}%`,
+    }
   },
-  icontains(field: string, value: string) {
-    return format('%I ILIKE %L', field, `%${value}%`)
+  icontains(field, value, index) {
+    return {
+      sql: format('%I ILIKE %s', field, `$${index}`),
+      value: `%${value}%`,
+    }
   },
-  startswith(field: string, value: string) {
-    return format('%I LIKE %L', field, `${value}%`)
+  startswith(field, value, index) {
+    return { sql: format('%I LIKE %s', field, `$${index}`), value: `${value}%` }
   },
-  istartswith(field: string, value: string) {
-    return format('%I ILIKE %L', field, `${value}%`)
+  istartswith(field, value, index) {
+    return {
+      sql: format('%I ILIKE %s', field, `$${index}`),
+      value: `${value}%`,
+    }
   },
-  endswith(field: string, value: string) {
-    return format('%I LIKE %L', field, `%${value}`)
+  endswith(field, value, index) {
+    return { sql: format('%I LIKE %s', field, `$${index}`), value: `%${value}` }
   },
-  iendswith(field: string, value: string) {
-    return format('%I ILIKE %L', field, `%${value}`)
+  iendswith(field, value, index) {
+    return {
+      sql: format('%I ILIKE %s', field, `$${index}`),
+      value: `%${value}`,
+    }
   },
 }
 
@@ -62,43 +79,42 @@ export const DEFAULT_FIELD_OPERATORS: Record<
  * @param field - The database column name to filter by.
  * @param value - The value to be compared, expected to represent a number.
  * @param operator - The SQL comparison operator (e.g., `=`, `>`, `<`, `>=`, `<=`).
+ * @param index - The value to insert to the SQL, for example convert to `$1`
  *
  * @returns A SQL snippet representing the safe numeric condition.
  *
  * @throws {Error} If the `value` is not a valid number.
- *
- * @example
- * ```ts
- * // Generates: "age >= 21"
- * const query = formatFilterNumberQuery('age', '21', '>=')
- * ```
  */
 function formatFilterNumberQuery(
   field: string,
   value: string,
   operator: string,
-): string {
-  return format(`%I ${operator} %s`, field, toNumberSafe(value))
+  index: number,
+): SQL_OPERATOR {
+  return {
+    sql: format(`%I ${operator} %s`, field, `$${index}`),
+    value: toNumberSafe(value),
+  }
 }
 
 export const NUMBER_FIELD_OPERATORS: Record<
   NumberOperator,
-  (field: string, value: string) => string
+  (field: string, value: string, index: number) => SQL_OPERATOR
 > = {
-  exact(field: string, value: string) {
-    return formatFilterNumberQuery(field, value, '=')
+  exact(field, value, index) {
+    return formatFilterNumberQuery(field, value, '=', index)
   },
-  gt(field: string, value: string) {
-    return formatFilterNumberQuery(field, value, '>')
+  gt(field, value, index) {
+    return formatFilterNumberQuery(field, value, '>', index)
   },
-  gte(field: string, value: string) {
-    return formatFilterNumberQuery(field, value, '>=')
+  gte(field, value, index) {
+    return formatFilterNumberQuery(field, value, '>=', index)
   },
-  lt(field: string, value: string) {
-    return formatFilterNumberQuery(field, value, '<')
+  lt(field, value, index) {
+    return formatFilterNumberQuery(field, value, '<', index)
   },
-  lte(field: string, value: string) {
-    return formatFilterNumberQuery(field, value, '<=')
+  lte(field, value, index) {
+    return formatFilterNumberQuery(field, value, '<=', index)
   },
 }
 
@@ -125,6 +141,7 @@ export class MainService {
       parsedQuery.fields,
       this.tableName,
     )
+    const dbQueryValues: (string | number)[] = []
 
     // Add WHERE clause if query has search fields
     if (parsedQuery.search.operator !== 'disabled') {
@@ -150,7 +167,13 @@ export class MainService {
               NUMBER_FIELD_OPERATORS[operator as NumberOperator]
             if (operatorFn && typeof operatorFn === 'function') {
               try {
-                return operatorFn(item.field, value)
+                const data = operatorFn(
+                  item.field,
+                  value,
+                  dbQueryValues.length + 1,
+                )
+                dbQueryValues.push(data.value)
+                return data.sql
               } catch (error) {
                 return ''
               }
@@ -159,7 +182,13 @@ export class MainService {
             const operatorFn =
               DEFAULT_FIELD_OPERATORS[operator as StringOperator]
             if (operatorFn && typeof operatorFn === 'function') {
-              return operatorFn(item.field, value)
+              const data = operatorFn(
+                item.field,
+                value,
+                dbQueryValues.length + 1,
+              )
+              dbQueryValues.push(data.value)
+              return data.sql
             }
           }
 
@@ -177,6 +206,7 @@ export class MainService {
     }
 
     console.log('QUERY = ', dbQuery)
-    return await this.db.query(dbQuery, [])
+    console.log('VALUES = ', dbQueryValues)
+    return await this.db.query(dbQuery, dbQueryValues)
   }
 }
