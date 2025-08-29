@@ -163,7 +163,12 @@ export function getQuery(
   })
 
   // Create deafault pg query with selected `fields`
-  let dbQuery = format('SELECT %I FROM %I', parsedQuery.fields, tableName)
+  let fields = parsedQuery.fields
+  if (fields.length === 0) {
+    fields = dbFields.map(f => f.key)
+  }
+
+  let dbQuery = format('SELECT %I FROM %I', fields, tableName)
   const dbQueryValues: (string | number)[] = []
 
   // Add WHERE clause if query has search fields
