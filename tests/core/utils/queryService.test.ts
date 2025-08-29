@@ -85,4 +85,22 @@ describe('getQuery', () => {
     expect(result.sql).toBe('SELECT id,name,email FROM users')
     expect(result.values).toEqual([])
   })
+
+  it('should handle IN query', () => {
+    const query = '?search.id__in=1,2,3&fields=id'
+
+    const result = getQuery(query, dbFields, 'users')
+
+    expect(result.sql).toBe('SELECT id FROM users WHERE id = ANY($1::int[])')
+    expect(result.values).toEqual([[1, 2, 3]])
+  })
+
+  it('should handle RANGE query', () => {
+    const query = '?search.id__range=1,2&fields=id'
+
+    const result = getQuery(query, dbFields, 'users')
+
+    expect(result.sql).toBe('SELECT id FROM users WHERE id BETWEEN $1 AND $2')
+    expect(result.values).toEqual([1, 2])
+  })
 })
