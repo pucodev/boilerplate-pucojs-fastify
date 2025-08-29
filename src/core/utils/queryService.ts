@@ -14,11 +14,18 @@ export type StringOperator =
   | 'endswith'
   | 'iendswith'
 
-export type NumberOperator = 'exact' | 'gt' | 'gte' | 'lt' | 'lte'
+export type NumberOperator =
+  | 'exact'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+  | 'in'
+  | 'range'
 
 export interface SQL_OPERATOR {
   sql: string
-  value: string | number
+  value: string | number | number[]
 }
 
 export const DEFAULT_FIELD_OPERATORS: Record<
@@ -82,7 +89,7 @@ export const DEFAULT_FIELD_OPERATORS: Record<
  */
 function formatFilterNumberQuery(
   field: string,
-  value: string,
+  value: string | string[],
   operator: string,
   index: number,
 ): SQL_OPERATOR {
@@ -94,7 +101,7 @@ function formatFilterNumberQuery(
 
 export const NUMBER_FIELD_OPERATORS: Record<
   NumberOperator,
-  (field: string, value: string, index: number) => SQL_OPERATOR
+  (field: string, value: string | string[], index: number) => SQL_OPERATOR
 > = {
   exact(field, value, index) {
     return formatFilterNumberQuery(field, value, '=', index)
@@ -110,6 +117,44 @@ export const NUMBER_FIELD_OPERATORS: Record<
   },
   lte(field, value, index) {
     return formatFilterNumberQuery(field, value, '<=', index)
+  },
+  in(field, value, index) {
+    let valueSql: number[] = []
+    if (typeof value === 'string') {
+      valueSql = value
+        .split(',')
+        .filter(v => v.trim() !== '')
+        .map(v => toNumberSafe(v))
+    } else if (Array.isArray(value)) {
+      valueSql = value.map(v => toNumberSafe(v))
+    } else {
+      throw new Error('value is not a valid type')
+    }
+
+    return {
+      sql: format('%I = ANY(%s::int[])', field, `$${index}`),
+      value: valueSql,
+    }
+  },
+  range(field, value, index) {
+    let valueSql: number[] = []
+    if (typeof value === 'string') {
+      const valueStr = value.split(',').filter(v => v.trim() !== '')
+      if (valueStr.length !== 2) {
+        throw new Error('value range is not available')
+      }
+
+      valueSql = valueStr.map(v => toNumberSafe(v))
+    } else if (Array.isArray(value)) {
+      valueSql = value.map(v => toNumberSafe(v))
+    } else {
+      throw new Error('value is not a valid type')
+    }
+
+    return {
+      sql: format('%I BETWEEN %s AND %s', field, `$${index}`, `$${index + 1}`),
+      value: valueSql,
+    }
   },
 }
 
@@ -169,7 +214,7 @@ export function getQuery(
   }
 
   let dbQuery = format('SELECT %I FROM %I', fields, tableName)
-  const dbQueryValues: (string | number)[] = []
+  const dbQueryValues: (string | number | number[])[] = []
 
   // Add WHERE clause if query has search fields
   if (parsedQuery.search.operator !== 'disabled') {
@@ -199,7 +244,14 @@ export function getQuery(
                 value,
                 dbQueryValues.length + 1,
               )
-              dbQueryValues.push(data.value)
+
+              if (operator === 'range') {
+                dbQueryValues.push((data.value as number[])[0])
+                dbQueryValues.push((data.value as number[])[1])
+              } else {
+                dbQueryValues.push(data.value)
+              }
+
               return data.sql
             } catch (error) {
               return ''

@@ -11,6 +11,8 @@ export type FilterOperator =
   | 'gte'
   | 'lt'
   | 'lte'
+  | 'in'
+  | 'range'
 
 export interface ServiceSearchQuery {
   operator: 'and' | 'or' | 'disabled'
@@ -60,6 +62,8 @@ export const VALID_FIELD_OPERATORS = [
   'gte',
   'lt',
   'lte',
+  'in',
+  'range',
 ]
 
 /**
