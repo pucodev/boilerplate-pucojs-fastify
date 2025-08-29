@@ -12,6 +12,7 @@ import { assertDefined } from '#utils/assert'
 
 /**
  * Retrieves database configuration from environment variables.
+ *
  * @throws {Error} If any required environment variable is missing or incorrect.
  * @returns The database configuration object.
  */
@@ -42,6 +43,7 @@ export function getDbConfig() {
 
 /**
  * Configure fastify database credentials from the environment
+ *
  * @param fastify  Encapsulated Fastify Instance
  */
 export function configDbService(fastify: FastifyInstance) {
