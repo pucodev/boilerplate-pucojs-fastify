@@ -1,6 +1,24 @@
+export type FilterOperator =
+  | 'exact'
+  | 'iexact'
+  | 'contains'
+  | 'icontains'
+  | 'startswith'
+  | 'istartswith'
+  | 'endswith'
+  | 'iendswith'
+  | 'gt'
+  | 'gte'
+  | 'lt'
+  | 'lte'
+
 export interface ServiceSearchQuery {
   operator: 'and' | 'or' | 'disabled'
-  conditions: Record<string, string>
+  conditions: {
+    field: string
+    operator: FilterOperator
+    value: string | number
+  }[]
 }
 
 export interface ServiceQuery {
@@ -29,6 +47,21 @@ function isParseAllowed(
   return typeof validator[field] === 'undefined' || validator[field] === true
 }
 
+export const VALID_FIELD_OPERATORS = [
+  'exact',
+  'iexact',
+  'contains',
+  'icontains',
+  'startswith',
+  'istartswith',
+  'endswith',
+  'iendswith',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+]
+
 /**
  * Parses query parameters into a structured {@link ServiceQuery} object.
  *
@@ -54,7 +87,7 @@ export default function parseQueryParams(
     fields: [],
     search: {
       operator: 'and',
-      conditions: {},
+      conditions: [],
     },
   }
 
@@ -80,8 +113,31 @@ export default function parseQueryParams(
       // Parse `search`
       else if (key.startsWith('search.')) {
         const searchKey = key.split('.')[1]
-        if (searchKey) {
-          result.search.conditions[searchKey] = value
+
+        // Add operator
+        const values = searchKey.split('__')
+        if (values.length > 1) {
+          // Obtenemos el ultimo valor que deberia ser el `operator`
+          let operator: FilterOperator = values.pop() as FilterOperator
+          const field = values.join('__')
+
+          // Validamos que el operator sea un valor valido, si no es valido lo definimos como exact
+          if (!VALID_FIELD_OPERATORS.includes(operator)) {
+            operator = 'exact'
+          }
+
+          // Agregamos la condicion
+          result.search.conditions.push({
+            operator,
+            field,
+            value,
+          })
+        } else if (searchKey) {
+          result.search.conditions.push({
+            operator: 'exact',
+            field: searchKey,
+            value,
+          })
         }
       }
 
@@ -99,7 +155,7 @@ export default function parseQueryParams(
       if (!isParseAllowed('search', validator)) {
         result.search = {
           operator: 'disabled',
-          conditions: {},
+          conditions: [],
         }
       }
     }
@@ -108,7 +164,7 @@ export default function parseQueryParams(
       fields: [],
       search: {
         operator: 'disabled',
-        conditions: {},
+        conditions: [],
       },
     }
   }
@@ -133,21 +189,22 @@ export default function parseQueryParams(
   }
   if (validSearchFields.length > 0) {
     const validFieldsSet = new Set(validSearchFields)
-    result.search.conditions = Object.fromEntries(
-      Object.entries(result.search.conditions).filter(([key]) =>
-        validFieldsSet.has(key),
-      ),
+    result.search.conditions = result.search.conditions.filter(item =>
+      validFieldsSet.has(item.field),
     )
   }
 
   // Disabled sarch if conditions is empty
-  if (Object.keys(result.search.conditions).length === 0) {
+  if (result.search.conditions.length === 0) {
     result.search.operator = 'disabled'
   }
   // Remove conditions if search is disabled
   if (result.search.operator === 'disabled') {
-    result.search.conditions = {}
+    result.search.conditions = []
   }
 
+  console.log('========================')
+  console.log('RESULT = ', JSON.stringify(result, null, 2))
+  console.log('========================')
   return result
 }
