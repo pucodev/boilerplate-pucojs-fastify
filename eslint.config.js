@@ -13,7 +13,15 @@ export default [
       '@stylistic': stylistic,
     },
     rules: {
-      '@stylistic/space-before-function-paren': ['error', 'never'],
+      '@stylistic/space-before-function-paren': [
+        'error',
+        {
+          anonymous: 'never',
+          named: 'never',
+          asyncArrow: 'always',
+        },
+      ],
+      '@stylistic/brace-style': 'off',
       '@stylistic/comma-dangle': [
         'error',
         {
@@ -24,6 +32,7 @@ export default [
           functions: 'always-multiline',
         },
       ],
+      'jsdoc/tag-lines': ['warn', 'any', { startLines: 1 }],
     },
   },
 ]

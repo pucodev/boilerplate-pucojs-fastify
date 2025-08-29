@@ -6,6 +6,8 @@
   "imports": {
     "#utils/*": "./src/core/utils/*.ts",
     "#config/*": "./src/core/config/*.ts",
+    "#db/*": "./src/infra/db/*.ts",
+    "#services/*": "./src/infra/services/*.ts",
     "#routes/*": "./src/api/v1/routes/*.ts"
   },
   "scripts": {
@@ -31,6 +33,7 @@
     "@tsconfig/node22": "^22.0.2",
     "@types/node": "^24.2.1",
     "@types/pg": "^8.15.5",
+    "@types/pg-format": "^1.0.5",
     "eslint": "^9.15.0",
     "eslint-plugin-jsdoc": "^50.4.3",
     "husky": "^9.1.7",

@@ -1,11 +1,24 @@
 import type { FastifyInstance } from 'fastify'
 
+import { UserService } from '#services/user.service'
+
 /**
  * User routes
+ *
  * @param fastify - fastify instance
  */
 export function userRoutes(fastify: FastifyInstance) {
-  fastify.get('/', (_request, _reply) => {
-    return { hello: 'world' }
-  })
+  fastify.get<{ Querystring: Record<string, string> }>(
+    '/',
+    async (request, reply) => {
+      const query = request.query
+      try {
+        const userService = new UserService(fastify.pg)
+        const response = await userService.query(query)
+        reply.send(response)
+      } catch (error) {
+        reply.send(error)
+      }
+    },
+  )
 }

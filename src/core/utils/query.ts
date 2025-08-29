@@ -1,0 +1,153 @@
+export interface ServiceSearchQuery {
+  operator: 'and' | 'or' | 'disabled'
+  conditions: Record<string, string>
+}
+
+export interface ServiceQuery {
+  fields: string[]
+  search: ServiceSearchQuery
+}
+
+export interface ServiceQueryValidator {
+  fields?: boolean
+  search?: boolean
+  validFields?: string[]
+  validSearchFields?: string[]
+}
+
+/**
+ * Checks if parsing is allowed for a given field based on the validator.
+ *
+ * @param field - The field to check ("fields" or "search").
+ * @param validator - The validation rules.
+ * @returns True if parsing is allowed, false otherwise.
+ */
+function isParseAllowed(
+  field: 'fields' | 'search',
+  validator: ServiceQueryValidator,
+): boolean {
+  return typeof validator[field] === 'undefined' || validator[field] === true
+}
+
+/**
+ * Parses query parameters into a structured {@link ServiceQuery} object.
+ *
+ * Supported query parameters:
+ * - `fields`: Comma-separated list of field names. Example: `fields=name,description`
+ * - `search_operator`: Logical operator for combining search conditions (`and` | `or`), default `and`.
+ * - `search.{key}`: Key/value pairs for search filters. Example: `search.name=demo`
+ *
+ * Validation:
+ * - If `fields` is disabled in the validator, the `fields` array will be empty.
+ * - If `search` is disabled in the validator, the search operator will be `disabled` and conditions will be empty.
+ * - `validFields`: In the result, only valid fields are shown.
+ *
+ * @param query - The query string to parse (e.g., `fields=name,description&search.name=demo&search.description=demo&search._operator=or`).
+ * @param validator - Optional validation rules to restrict parsing.
+ * @returns A structured {@link ServiceQuery} object.
+ */
+export default function parseQueryParams(
+  query: string | Record<string, string | readonly string[]>,
+  validator: ServiceQueryValidator = { fields: true, search: true },
+): ServiceQuery {
+  const result: ServiceQuery = {
+    fields: [],
+    search: {
+      operator: 'and',
+      conditions: {},
+    },
+  }
+
+  try {
+    const params = new URLSearchParams(query)
+
+    for (const [key, value] of params.entries()) {
+      // Parse `fields`
+      if (key === 'fields') {
+        result.fields = value
+          .split(',')
+          .map(f => f.trim())
+          .filter(f => f !== '')
+      }
+
+      // Parse `search operator`
+      else if (key === 'search_operator') {
+        if (value === 'and' || value === 'or') {
+          result.search.operator = value || 'and'
+        }
+      }
+
+      // Parse `search`
+      else if (key.startsWith('search.')) {
+        const searchKey = key.split('.')[1]
+        if (searchKey) {
+          result.search.conditions[searchKey] = value
+        }
+      }
+
+      // ===============
+      // Validators
+      // Clean `fields` or `search` if method is not allowed
+      // ===============
+
+      // Validate fields
+      if (!isParseAllowed('fields', validator)) {
+        result.fields = []
+      }
+
+      // Validate search
+      if (!isParseAllowed('search', validator)) {
+        result.search = {
+          operator: 'disabled',
+          conditions: {},
+        }
+      }
+    }
+  } catch {
+    return {
+      fields: [],
+      search: {
+        operator: 'disabled',
+        conditions: {},
+      },
+    }
+  }
+
+  // ================
+  // Validate fields
+  // ================
+  if (validator?.validFields && validator.validFields.length > 0) {
+    const validFieldsSet = new Set(validator.validFields)
+    result.fields = result.fields.filter(f => validFieldsSet.has(f))
+  }
+
+  // ===============
+  // Validate search
+  // ===============
+  // Remove invalid conditions based on `validSearchFields` or `validFields`
+  let validSearchFields: string[] = []
+  if (validator?.validSearchFields && validator.validSearchFields.length > 0) {
+    validSearchFields = validator.validSearchFields
+  } else if (validator?.validFields && validator.validFields.length > 0) {
+    validSearchFields = validator.validFields
+  }
+  if (validSearchFields.length > 0) {
+    const validFieldsSet = new Set(validSearchFields)
+    result.search.conditions = Object.fromEntries(
+      Object.entries(result.search.conditions).filter(([key]) =>
+        validFieldsSet.has(key),
+      ),
+    )
+  }
+
+  // Disabled sarch if conditions is empty
+  if (Object.keys(result.search.conditions).length === 0) {
+    result.search.operator = 'disabled'
+  }
+  // Remove conditions if search is disabled
+  if (result.search.operator === 'disabled') {
+    result.search.conditions = {}
+  }
+
+  return result
+}
